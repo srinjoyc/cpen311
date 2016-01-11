@@ -13,7 +13,7 @@ use ieee.std_logic_1164.all;
 --  This is the entity part of the top level file for Phase 3.
 --  The entity part declares the inputs and outputs of the
 --  module as well as their types.  For now, a signal of
---  “std_logic” type can take on the value ‘0’ or ‘1’ (it
+--  âstd_logicâ type can take on the value â0â or â1â (it
 --  can actually do more than this).  A signal of type
 --  std_logic_vector can be thought of as an array of 
 --  std_logic, and is used to describe a bus (a parallel 
@@ -45,11 +45,12 @@ end state_machine;
 
 architecture behavioural of state_machine is
 
+-- Write your code here
 --signal declarations
 signal next_state, current_state : std_logic_vector(2 downto 0);
 begin
 
--- state changes, determines next state based on current state, combinational block
+-- state changes, determines next state based on current state
  
  process(all)
     begin 
@@ -89,11 +90,11 @@ begin
                    else 
                     next_state <= "001"; 
                     end if;-- -- corresponds to y
-      when others => next_state <= "000"; 
+      when others => next_state <= "000"; --corresponds to display showing nothing
       end case;
-if (resetb='0') then --it says that resetb is low activated in the entity declaration so i set it equal to zero
-next_state <= "000";
-end if;
+      if (resetb='0') then 
+      next_state <= "000";
+      end if;
 		end process;
 
  --outputs, prints current state on hex display
@@ -114,12 +115,11 @@ end if;
     hex0 <= "0100011";
   elsif (current_state = "101") then -- corresponds t y
     hex0 <= "0010001";
-	else hex0 <= "1111111"; -- corresponds to a null state, shows nothing
-end if; 
+	end if; 
 end process;
 
 --clock, syncronous reset 
-process (clk) 
+process (all) 
 begin 
 if (rising_edge(clk)) then 
 current_state <= next_state;
@@ -127,3 +127,4 @@ end if;
 end process;
 
 end behavioural;
+
