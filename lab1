@@ -1,4 +1,3 @@
---Lab 1. 
 --------------------------------------------------------
 --
 --  This is the skeleton file for Lab 1 Phase 3.  You should
@@ -14,7 +13,7 @@ use ieee.std_logic_1164.all;
 --  This is the entity part of the top level file for Phase 3.
 --  The entity part declares the inputs and outputs of the
 --  module as well as their types.  For now, a signal of
---  âstd_logicâ type can take on the value â0â or â1â (it
+--  “std_logic” type can take on the value ‘0’ or ‘1’ (it
 --  can actually do more than this).  A signal of type
 --  std_logic_vector can be thought of as an array of 
 --  std_logic, and is used to describe a bus (a parallel 
@@ -46,11 +45,13 @@ end state_machine;
 
 architecture behavioural of state_machine is
 
--- Write your code here
 --signal declarations
 signal next_state, current_state : std_logic_vector(2 downto 0);
 begin
-  process(all)
+
+-- state changes, determines next state based on current state, combinational block
+ 
+ process(all)
     begin 
       case current_state is 
       when "000" => if (skip= '0') then 
@@ -88,19 +89,41 @@ begin
                    else 
                     next_state <= "001"; 
                     end if;-- -- corresponds to y
-      when others => next_state <= "000";
+      when others => next_state <= "010"; -- a Null state showing nothing
       end case;
-    end process;
-    
-    process(clk)
+if (resetb='0') then --it says that resetb is low activated in the entity declaration so i set it equal to zero
+next_state <= "000";
+end if;
+		end process;
+
+ --outputs, prints current state on hex display
  
- -- clock 
- begin
- if rising_edge(clk) then
- current_state <= next_state;
- end if;
- end process;
- 
- --outputs
+  process(all)
+    begin
+  if (current_state = "000") then  -- corresponds to s
+    hex0 <= "0010010";
+  elsif (current_state = "001") then -- corresponds to r
+    hex0 <= "0101111";
+  elsif (current_state = "011") then -- corresponds to i 
+    hex0 <= "1101111";
+  elsif (current_state = "111") then -- corresponds t n
+    hex0 <= "0101011";
+  elsif (current_state = "100") then -- corresponds t j
+    hex0 <= "1110001";
+  elsif (current_state = "110") then -- corresponds t o
+    hex0 <= "0100011";
+  elsif (current_state = "101") then -- corresponds t y
+    hex0 <= "0010001";
+	else hex0 <= "1111111"; -- corresponds to a null state, shows nothing
+end if; 
+end process;
+
+--clock, syncronous reset 
+process (clk) 
+begin 
+if (rising_edge(clk)) then 
+current_state <= next_state;
+end if;
+end process;
 
 end behavioural;
