@@ -89,7 +89,7 @@ begin
                    else 
                     next_state <= "001"; 
                     end if;-- -- corresponds to y
-      when others => next_state <= "010"; -- a Null state showing nothing
+      when others => next_state <= "000"; 
       end case;
 if (resetb='0') then --it says that resetb is low activated in the entity declaration so i set it equal to zero
 next_state <= "000";
