@@ -1,0 +1,172 @@
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+USE IEEE.NUMERIC_STD.ALL;
+ 
+LIBRARY WORK;
+USE WORK.ALL;
+
+--------------------------------------------------------------
+--
+--  Steve Wilton, Jan 2016  
+--
+--  This is the skeleton for the win subblock.  This block determines
+--  whether the bet is a winner, and if so, whether it should
+--  pay out x35 (if it is a straight up bet), x17 (a split), 
+--  or x8 (a corner bet).  At most one of the outputs win_straightup,
+--  win_split or win_corner will go high (if none of them go high, 
+--  the bet is a loser).
+--
+--  This is a purely combinational block.  There is no clock.
+--
+---------------------------------------------------------------
+
+ENTITY win IS
+	PORT(spin_result_latched : in unsigned(5 downto 0);  -- result of the spin (the winning number)
+             bet_target : in unsigned(5 downto 0); -- target number for bet
+             bet_modifier : in unsigned(3 downto 0); -- as described in the handout
+             win_straightup : out std_logic;  -- whether it is a straight-up winner
+             win_split : out std_logic;  -- whether it is a split bet winner
+             win_corner : out std_logic); -- whether it is a corner bet winner
+END win;
+
+
+ARCHITECTURE behavioural OF win IS
+ 
+-- this signal is going to be assigned a value by the second process which determines the kind of win
+-- if the value of this signal is "100", then win_straightup is set to high
+-- else if the value of the signal is "010", then win_split is set to high
+-- else if the value of the signal is "001", then win_corner is set to high
+-- else all other values correspond to the user not winning
+ signal winning : std_logic_vector(2 downto 0);
+ 
+ 
+  -- intermediate values to check for split and integer bets
+ signal n_bet,s_bet,e_bet,w_bet, ne_bet,se_bet,nw_bet, sw_bet: integer;
+ -- roulette value
+ signal spin_val : integer;
+ -- guessed value
+ signal guess_val : integer;
+ 
+ 
+  -- a corner bet occurs when the modifier is set to 1001 (NE), 1011 (SE), 1111(NW), 1101 (SW)   
+ constant NE : unsigned(3 downto 0) := "1001";
+ constant SE : unsigned(3 downto 0) := "1011";
+ constant NW : unsigned(3 downto 0) := "1111";
+ constant SW : unsigned(3 downto 0) := "1101";
+ 
+  -- a split bet occur when the modifier is set to 1000 (N), 1100 (S), 1010 (E), 1110 (W)
+ constant N : unsigned(3 downto 0) := "1000";
+ constant S : unsigned ( 3 downto 0) := "1100";
+ constant E : unsigned ( 3 downto 0) := "1010";
+ constant W : unsigned ( 3 downto 0) := "1110";
+  
+ begin   
+  
+  spin_val <= to_integer( unsigned(spin_result_latched));
+  guess_val <= to_integer( unsigned(bet_target));
+   
+-- process that maps numbers around target bet
+  process (all)
+    begin 
+   n_bet <= guess_val - 3; 
+   e_bet <= guess_val + 1;
+   w_bet <= guess_val - 1 ;
+   s_bet <= guess_val + 3;
+   --left most column
+  if((guess_val+2) mod 3 = 0  ) then  
+    ne_bet <= guess_val - 2;
+    se_bet <= guess_val + 4; 
+  end if;
+    -- right most column
+    if (guess_val mod 3 = 0 ) then  
+     sw_bet <= guess_val + 2;
+     nw_bet <= guess_val - 4;
+   end if;
+     -- middle column
+   if((guess_val+1) mod 3 = 0 )then
+    ne_bet <= guess_val - 2;
+    nw_bet <= guess_val - 4;
+    se_bet <= guess_val + 4;
+    sw_bet <= guess_val + 2;
+    end if;
+    
+    end process;
+  
+-- this determines whether the player has won  
+  process(all) 
+    begin 
+    case  Bet_modifier is 
+    
+    when NW => if ( spin_val = n_bet or spin_val = nw_bet or spin_val = w_bet or spin_val = guess_val) then 
+                 winning <= "001";
+                else  
+                 winning <= "000"; 
+                end if;
+     
+    when NE => if ( spin_val = n_bet or spin_val = ne_bet or spin_val = e_bet or spin_val = guess_val) then 
+                 winning <= "001";
+                else
+                  winning <= "000";
+                end if;            
+      
+    when SW => if ( spin_val = s_bet or spin_val = sw_bet or spin_val = w_bet or spin_val = guess_val) then 
+                 winning <= "001";
+                else  
+                 winning <= "000"; 
+                end if;     
+     
+    when SE => if ( spin_val = s_bet or spin_val = se_bet or spin_val = e_bet or spin_val = guess_val) then 
+                winning <= "001";
+                else  
+                 winning <= "000"; 
+                end if;
+      
+    when N => if ( spin_val = n_bet or spin_val = guess_val) then 
+                 winning <= "010";
+                else  
+                 winning <= "000"; 
+                end if;                 
+    when E => if ( spin_val = e_bet or spin_val = guess_val) then 
+                winning <= "010";
+                else  
+                 winning <= "000"; 
+                end if; 
+    when S => if ( spin_val = s_bet or spin_val = guess_val) then 
+                winning <= "010";
+                else  
+                 winning <= "000"; 
+                end if; 
+    when w => if ( spin_val = w_bet or spin_val = guess_val) then 
+                winning <= "010";
+                else  
+                 winning <= "000"; 
+                end if;
+    when others => if ( spin_val = guess_val) then 
+                 winning <= "100";
+                else  
+                 winning <= "000"; 
+                end if;
+    end case;               
+end process;    
+
+-- convert the 3-bit vector encoding to the corresponding output 
+    process (all)
+      begin 
+        case winning is 
+          when "001" => win_straightup<='0';
+                        win_split<='0';
+                        win_corner<='1';
+          when "010" => win_straightup<='0';
+                        win_split<='1';
+                        win_corner<='0';
+          when "100" => win_straightup<='1';
+                        win_split<='0';
+                        win_corner<='0';        
+          when others =>win_straightup<='0';
+                        win_split<='0';
+                        win_corner<='0'; 
+         end case;
+     end process;    
+                 
+END;
+
