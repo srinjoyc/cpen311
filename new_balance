@@ -1,0 +1,60 @@
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+USE IEEE.NUMERIC_STD.ALL;
+ 
+LIBRARY WORK;
+USE WORK.ALL;
+
+--------------------------------------------------------------
+--
+--  Steve Wilton, Jan 2016.  
+--  Skeleton file for new_balance block
+--
+---------------------------------------------------------------
+
+
+ENTITY new_balance IS
+  PORT(money : in unsigned(15 downto 0);
+       bet_amount : in unsigned(2 downto 0);
+       win_straightup : in std_logic;
+       win_split : in std_logic;
+       win_corner : in std_logic;
+       new_money : out unsigned(15 downto 0));
+END new_balance;
+
+
+ARCHITECTURE behavioural OF new_balance IS
+
+begin 
+
+  process(all)
+    -- we use variable because variables are updated immediately in processes as opposed to 
+    -- signals that are updated at the end of processes
+    
+   variable balance: integer;
+   Variable money_int, bet_amount_int : integer;   
+   begin  
+     --- converting unsigned vectors to integer values to simplify arithmetic opertaions 
+     money_int := to_integer(money);
+     bet_amount_int := to_integer(bet_amount);
+    -- -- deduct initial bet from total, this amount is only added to if the player wins
+     balance := money_int - bet_amount_int;
+     -- if the player won a straighht bet
+     if ( win_straightup ='1') then
+       balance := balance + 35*bet_amount_int+bet_amount_int;
+       end if;
+    --if the player won a split bet
+     if ( win_split ='1') then
+       balance := balance + 17*bet_amount_int+bet_amount_int;
+       end if;
+     -- if a player won a corner bet
+     if ( win_corner ='1') then
+       balance := balance + 8*bet_amount_int+bet_amount_int;
+       end if; 
+      -- the output signal is and unsigned 16 bit vector
+      -- we must convert balance to this type 
+       new_money <= to_unsigned(balance, 16);       
+  end process;
+  
+  
+END;
