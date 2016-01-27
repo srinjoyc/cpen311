@@ -1,0 +1,128 @@
+LIBRARY IEEE;
+USE IEEE.STD_LOGIC_1164.ALL;
+USE IEEE.NUMERIC_STD.ALL;
+ 
+LIBRARY WORK;
+USE WORK.ALL;
+
+----------------------------------------------------------------------
+--
+--  This is the top level template for Lab 2.  Use the schematic
+--  in the lab handout to guide you in creating this structural description.
+--  The combinational blocks have already been designed in previous tasks,
+--  and the spinwheel block is given to you.  Your task is to combine these
+--  blocks, as well as add the various registers shown on the schemetic, and
+--  wire them up properly.  The result will be a roulette game you can play
+--  on your DE2.
+--
+-----------------------------------------------------------------------
+
+ENTITY roulette IS
+	PORT(   CLOCK_27 : IN STD_LOGIC; -- the fast clock for spinning wheel
+		KEY : IN STD_LOGIC_VECTOR(3 downto 0);  -- includes slow_clock and reset
+		SW : IN STD_LOGIC_VECTOR(17 downto 0);
+		LEDG : OUT STD_LOGIC_VECTOR(3 DOWNTO 0);  -- ledg
+		HEX7 : OUT STD_LOGIC_VECTOR(6 DOWNTO 0);  -- digit 7
+		HEX6 : OUT STD_LOGIC_VECTOR(6 DOWNTO 0);  -- digit 6
+		HEX5 : OUT STD_LOGIC_VECTOR(6 DOWNTO 0);  -- digit 5
+		HEX4 : OUT STD_LOGIC_VECTOR(6 DOWNTO 0);  -- digit 4
+		HEX3 : OUT STD_LOGIC_VECTOR(6 DOWNTO 0);  -- digit 3
+		HEX2 : OUT STD_LOGIC_VECTOR(6 DOWNTO 0);  -- digit 2
+		HEX1 : OUT STD_LOGIC_VECTOR(6 DOWNTO 0);  -- digit 1
+		HEX0 : OUT STD_LOGIC_VECTOR(6 DOWNTO 0)   -- digit 0
+	);
+END roulette;
+
+
+ARCHITECTURE structural OF roulette IS
+  
+  component win
+    -- win block
+    PORT(    
+             spin_result_latched : in unsigned(5 downto 0);  -- result of the spin (the winning number)
+             bet_target : in unsigned(5 downto 0); -- target number for bet
+             bet_modifier : in unsigned(3 downto 0); -- as described in the handout
+             win_straightup : out std_logic;  -- whether it is a straight-up winner
+             win_split : out std_logic;  -- whether it is a split bet winner
+             win_corner : out std_logic
+        ); -- whether it is a corner bet winner
+             
+    END component;
+    --spinwheel
+    component spinwheel 
+	
+	  PORT(
+		      fast_clock : IN  STD_LOGIC;  -- This will be a 27 Mhz Clock
+		      resetb : IN  STD_LOGIC;      -- asynchronous reset
+		      spin_result  : OUT UNSIGNED(5 downto 0)
+		    
+		    );  -- current value of the wheel
+      
+    END component;
+    
+  --segment display
+  component digit7seg 
+      
+	 PORT (
+          digit : IN  UNSIGNED(3 DOWNTO 0);  -- number 0 to 0xF
+          seg7 : OUT STD_LOGIC_VECTOR(6 DOWNTO 0)  -- one per segment
+	     );
+   END component;
+  
+  -- money tracker
+  
+  component new_balance 
+  
+  PORT(
+       money : in unsigned(15 downto 0);
+       bet_amount : in unsigned(2 downto 0);
+       win_straightup : in std_logic;
+       win_split : in std_logic;
+       win_corner : in std_logic;
+       new_money : out unsigned(15 downto 0)
+      );
+    
+    
+    END component;
+    
+    signal spin_result : std_logic_vector(5 downto 0);
+    signal targetnum   : std_logic_vector(5 downto 0);
+    signal bet_mod: std_logic_vector(9 downto 6);
+    signal amount: std_logic_vector(12 downto 10);
+    signal win_straightup : std_logic;  -- whether it is a straight-up winner
+    signal win_split :  std_logic;  -- whether it is a split bet winner
+    signal win_corner : std_logic;
+    
+    
+  
+  
+  begin
+    
+    
+    spin: spinwheel port map (CLOCK_27, KEY(0), spin_result);
+    HEX7: digit7seg port map (spin_result(5 downto 4), HEX7); 
+    HEX6: digit7seg port map (spin_result(3 downto 0), HEX6);
+    winblock: win port map (spin_result,targetnum,bet_mod,win_straightup,win_split,win_corner);  
+   -- money: new_balance port map(  
+    
+    
+      
+    
+  process(CLOCK_50)
+   begin
+     
+    if RISING_EDGE (CLOCK_50) then
+      
+    targetnum<=SW(5 downto 0);
+    bet_mod<=SW(9 downto 6);
+    amount <= SW(12 downto 0);
+    
+    end if;
+       
+     
+     
+ 
+  end process;
+ 
+END;
+
