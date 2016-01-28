@@ -33,10 +33,11 @@ ENTITY roulette IS
 	);
 END roulette;
 
-
 ARCHITECTURE structural OF roulette IS
-  
-  component win
+
+------------------- componenet declarations -----------------
+
+  component win 
     -- win block
     PORT(    
              spin_result_latched : in unsigned(5 downto 0);  -- result of the spin (the winning number)
@@ -46,10 +47,10 @@ ARCHITECTURE structural OF roulette IS
              win_split : out std_logic;  -- whether it is a split bet winner
              win_corner : out std_logic
         ); -- whether it is a corner bet winner
-             
-    END component;
-    --spinwheel
-    component spinwheel 
+end component;
+ 
+-- spin wheel generates random numbers 
+  component spinwheel 
 	
 	  PORT(
 		      fast_clock : IN  STD_LOGIC;  -- This will be a 27 Mhz Clock
@@ -58,9 +59,9 @@ ARCHITECTURE structural OF roulette IS
 		    
 		    );  -- current value of the wheel
       
-    END component;
+    END component;  
     
-  --segment display
+   --segment display
   component digit7seg 
       
 	 PORT (
@@ -81,48 +82,79 @@ ARCHITECTURE structural OF roulette IS
        win_corner : in std_logic;
        new_money : out unsigned(15 downto 0)
       );
-    
-    
+        
     END component;
     
-    signal spin_result : std_logic_vector(5 downto 0);
-    signal targetnum   : std_logic_vector(5 downto 0);
-    signal bet_mod: std_logic_vector(9 downto 6);
-    signal amount: std_logic_vector(12 downto 10);
-    signal win_straightup : std_logic;  -- whether it is a straight-up winner
-    signal win_split :  std_logic;  -- whether it is a split bet winner
-    signal win_corner : std_logic;
+    -- n bit flip-flop 
+   component vdffe  -- n-bit Register with Load Enable (use sDFFE for std_logic)
+     generic( n: integer := 1 );
+        port( clk: in std_logic;
+          en: in std_logic;
+          D: in unsigned( n-1 downto 0 );
+          Q: out unsigned( n-1 downto 0 ) );
+  end component;
+  
+    component vDFF 
+        generic( n: integer := 1 );
+        port( clk: in std_logic;
+          resetb: in std_logic;
+          D: in unsigned( n-1 downto 0 );
+          Q: out unsigned( n-1 downto 0 ) );
+     end component;
     
-    
+
+--------------- end of component declarations ----------------
+
+
+----------- signal declarations --------------
+signal spin_result, spin_result_latched, bet_target : unsigned( 5 downto 0) ;  
+signal bet_modifier : unsigned(3 downto 0) ; 
+signal win_straightup, win_split, win_corner : std_logic ;
+signal new_money, money : unsigned (15 downto 0) ; 
+signal bet_amount : unsigned(2 downto 0); 
+
+
+
+------------end of signal declarations------------
+
+BEGIN 
+   
+  SpinwheelBlock : spinwheel PORT map(CLOCK_27, KEY(1), spin_result); 
+register2 :  VDFFE generic map (6) port map( key(0), KEY(1), spin_result, spin_result_latched); 
+Register3 :  vdffe generic map (6) port map( KEY(0), KEY(1), sw(5)&sw(4)&sw(3)&sw(2)&sw(1)&sw(0), bet_target);
+register4 :  vdffe generic map (4) port map (key(0), key(1), sw(9)&sw(8)&sw(7)&sw(6), bet_modifier);  
+Register6 :  vdffe generic map (3) port map (key(0),key(1),sw(12)&sw(11)&sw(10), bet_amount);
+Register7 :  vdffe generic map (16) port map (key(0),key(1),new_money, money);
+  winBlock : win port map (spin_result_latched,bet_target,bet_modifier,win_straightup,win_split,win_corner);
+  newBalance : new_balance port map (money, bet_amount, win_straightup, win_split, win_corner, new_money);
+  hex0init :  digit7seg port map(new_money(3 downto 0) ,hex0); 
+  hex1init :  digit7seg port map(new_money(7 downto 4) ,hex1);
+  hex2init :  digit7seg port map(new_money(11 downto 8) ,hex2);
+  hex3init :  digit7seg port map(new_money(15 downto 12) ,hex3);
+  hex6init :  digit7seg port map(spin_result_latched(3 downto 0),hex6);
+  hex7init :  digit7seg port map ("00"& spin_result_latched (5 downto 4)  ,hex7);
+  hex4 <= "1111111";
+  hex5 <= "1111111";  
+  
+  process (all)
+  begin 
+      if ( win_straightup = '1') then
+    LEDG(0) <= '1';
+  end if;
+   if ( win_split = '1') then
+    LEDG(1) <= '1';
+  end if;  
+    if ( win_corner = '1') then
+    LEDG(2) <= '1';
+  end if;  
+        
+  end process;  
   
   
-  begin
-    
-    
-    spin: spinwheel port map (CLOCK_27, KEY(0), spin_result);
-    HEX7: digit7seg port map (spin_result(5 downto 4), HEX7); 
-    HEX6: digit7seg port map (spin_result(3 downto 0), HEX6);
-    winblock: win port map (spin_result,targetnum,bet_mod,win_straightup,win_split,win_corner);  
-   -- money: new_balance port map(  
-    
-    
-      
-    
-  process(CLOCK_50)
-   begin
-     
-    if RISING_EDGE (CLOCK_50) then
-      
-    targetnum<=SW(5 downto 0);
-    bet_mod<=SW(9 downto 6);
-    amount <= SW(12 downto 0);
-    
-    end if;
-       
-     
-     
- 
-  end process;
- 
 END;
+
+
+
+
+
 
