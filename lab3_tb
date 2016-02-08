@@ -1,0 +1,136 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library work;
+use work.all;
+
+
+entity lab3_tb is
+  
+END lab3_tb;
+
+
+architecture impl of lab3_tb is
+
+  
+component lab3 is
+  port(CLOCK_50            : in  std_logic;
+       KEY                 : in  std_logic_vector(3 downto 0);
+       SW                  : in  std_logic_vector(17 downto 0);
+       VGA_R, VGA_G, VGA_B : out std_logic_vector(9 downto 0);  -- The outs go to VGA controller
+       VGA_HS              : out std_logic;
+       VGA_VS              : out std_logic;
+       VGA_BLANK           : out std_logic;
+       VGA_SYNC            : out std_logic;
+       VGA_CLK             : out std_logic);
+end component;
+  
+ 
+  
+   signal    CLOCK_50            :   std_logic;
+    signal   KEY                 :   std_logic_vector(3 downto 0);
+    signal   SW                  :   std_logic_vector(17 downto 0);
+      signal VGA_R, VGA_G, VGA_B :  std_logic_vector(9 downto 0);  -- The outs go to VGA controller
+     signal  VGA_HS              :  std_logic;
+      signal VGA_VS              :  std_logic;
+    signal   VGA_BLANK           :  std_logic;
+       signal VGA_SYNC            : std_logic;
+      signal  VGA_CLK             : std_logic;
+  
+  begin
+       
+  dut: lab3 port map (
+       CLOCK_50          ,
+       KEY                 ,
+       SW                  ,
+       VGA_R, VGA_G, VGA_B,
+       VGA_HS             , 
+       VGA_VS            ,  
+       VGA_BLANK        ,   
+       VGA_SYNC        ,    
+       VGA_CLK             
+       );
+  
+  process
+    
+    begin 
+      
+     clock_50 <= '1';
+     wait for 5 ns;
+     clock_50 <= '0';
+     wait for 5 ns;
+   clock_50 <= '1';
+   wait for 5  ns;
+  clock_50 <= '0';
+  wait for 5 ns;
+  clock_50 <= '1';
+  wait for 5 ns;
+  clock_50 <= '0';
+  wait for 5 ns;
+      clock_50 <= '1';
+     wait for 5 ns;
+     clock_50 <= '0';
+     wait for 5 ns;
+   clock_50 <= '1';
+   wait for 5  ns;
+  clock_50 <= '0';
+  wait for 5 ns;
+  clock_50 <= '1';
+  wait for 5 ns;
+  clock_50 <= '0';
+  wait for 5 ns;
+      clock_50 <= '1';
+     wait for 5 ns;
+     clock_50 <= '0';
+     wait for 5 ns;
+   clock_50 <= '1';
+   wait for 5  ns;
+  clock_50 <= '0';
+  wait for 5 ns;
+  clock_50 <= '1';
+  wait for 5 ns;
+  clock_50 <= '0';
+  wait for 5 ns;
+  clock_50 <= '1';
+     wait for 5 ns;
+     clock_50 <= '0';
+     wait for 5 ns;
+   clock_50 <= '1';
+   wait for 5  ns;
+  clock_50 <= '0';
+  wait for 5 ns;
+  clock_50 <= '1';
+  wait for 5 ns;
+  clock_50 <= '0';
+  wait for 5 ns;
+      clock_50 <= '1';
+     wait for 5 ns;
+     clock_50 <= '0';
+     wait for 5 ns;
+   clock_50 <= '1';
+   wait for 5  ns;
+  clock_50 <= '0';
+  wait for 5 ns;
+  clock_50 <= '1';
+  wait for 5 ns;
+  clock_50 <= '0';
+  wait for 5 ns;
+      clock_50 <= '1';
+     wait for 5 ns;
+     clock_50 <= '0';
+     wait for 5 ns;
+   clock_50 <= '1';
+   wait for 5  ns;
+  clock_50 <= '0';
+  wait for 5 ns;
+  clock_50 <= '1';
+  wait for 5 ns;
+  clock_50 <= '0';
+  wait for 5 ns;
+  wait;
+  
+end process ;
+
+end impl;
+
