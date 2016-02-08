@@ -57,8 +57,9 @@ begin
              VGA_CLK   => VGA_CLK);
              
   plot   <= not KEY(0);  
-  
+  y<="0000010";
 
+-- process for changing color 
  process(all)
 
  variable x_mod_8 : integer;
@@ -84,20 +85,29 @@ begin
 
  end process;
 
-
+-- process for changing cord
   process(all)
     
+    variable x_num : integer;  
+    variable x_done: integer;
+    
     begin 
-   
-  for i in 159 downto 0 loop 
-    x<= std_logic_vector(to_unsigned(i,8));
-    for r in 119 downto 0 loop
-      y <= std_logic_vector(to_unsigned(r,7));
-  end loop;
-  end loop;
+      
+      x_num := 0;
+      
+   if(rising_edge(CLOCK_50)) then 
+    x_num := x_num+1;
+    x <= std_logic_vector(to_unsigned(x_num,8));
+  end if;
+  if(x_num=159) then 
+    x_num := 0;
+    x_done :=1;
+  end if;
+    
   
   end process;
   
 end rtl;
+
 
 
