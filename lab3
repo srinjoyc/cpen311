@@ -88,20 +88,26 @@ begin
 -- process for changing cord
   process(all)
     
-    variable x_num : integer;  
-    variable x_done: integer;
+    variable x_num : integer; 
+    variable y_num: integer; 
     
     begin 
       
-      x_num := 0;
+    --  x_num := 0;
       
    if(rising_edge(CLOCK_50)) then 
+   --x cords
     x_num := x_num+1;
     x <= std_logic_vector(to_unsigned(x_num,8));
   end if;
   if(x_num=159) then 
     x_num := 0;
-    x_done :=1;
+    -- y cords
+     if(rising_edge(CLOCK_50)) then
+     
+     y_num := y_num+1;
+    y <= std_logic_vector(to_unsigned(y_num,7));
+   end if;
   end if;
     
   
