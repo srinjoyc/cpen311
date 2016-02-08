@@ -89,7 +89,7 @@ begin
     if(rising_edge(CLOCK_50)) then 
    
             
-    if(y_offset < x_offset) then
+    if(y_offset = x_offset or  y_offset < x_offset) then
     
   if(which_octant=0) then
      X <= std_logic_vector(to_unsigned((60+x_offset),8));
@@ -150,6 +150,11 @@ begin
       else       
    which_octant <= which_octant +1;
  end if;
+
+else 
+  x <=x;
+  y <=y;
+
 end if; 
 
   end process;
