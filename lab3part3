@@ -1,0 +1,159 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+entity lab3 is
+  port(CLOCK_50            : in  std_logic;
+       KEY                 : in  std_logic_vector(3 downto 0);
+       SW                  : in  std_logic_vector(17 downto 0);
+       VGA_R, VGA_G, VGA_B : out std_logic_vector(9 downto 0);  -- The outs go to VGA controller
+       VGA_HS              : out std_logic;
+       VGA_VS              : out std_logic;
+       VGA_BLANK           : out std_logic;
+       VGA_SYNC            : out std_logic;
+       VGA_CLK             : out std_logic);
+end lab3;
+
+architecture rtl of lab3 is
+
+ --Component from the Verilog file: vga_adapter.v
+
+  component vga_adapter
+    generic(RESOLUTION : string);
+    port (resetn                                       : in  std_logic;
+          clock                                        : in  std_logic;
+          colour                                       : in  std_logic_vector(2 downto 0);
+          x                                            : in  std_logic_vector(7 downto 0);
+          y                                            : in  std_logic_vector(6 downto 0);
+          plot                                         : in  std_logic;
+          VGA_R, VGA_G, VGA_B                          : out std_logic_vector(9 downto 0);
+          VGA_HS, VGA_VS, VGA_BLANK, VGA_SYNC, VGA_CLK : out std_logic);
+  end component;
+    
+
+
+
+  signal x      : std_logic_vector(7 downto 0);
+  signal y      : std_logic_vector(6 downto 0);
+  signal colour : std_logic_vector(2 downto 0);
+  signal plot   : std_logic;
+  
+    SIGNAL x_num : integer; 
+    SIGNAL y_num: integer; 
+    SIGNAL y_offset: integer := 0;
+    SIGNAL x_offset: integer := 30;
+    SIGNAL radius: integer;
+    SIGNAL crit: integer := -29;
+    SIGNAL which_octant : integer := 0;
+
+begin
+
+--which_octant <= 0;
+  -- includes the vga adapter, which should be in your project 
+
+  vga_u0 : vga_adapter
+    generic map(RESOLUTION => "160x120") 
+    port map(resetn    => KEY(3),
+             clock     => CLOCK_50,
+             colour    => colour,
+             x         => x,
+             y         => y,
+             plot      => plot,
+             VGA_R     => VGA_R,
+             VGA_G     => VGA_G,
+             VGA_B     => VGA_B,
+             VGA_HS    => VGA_HS,
+             VGA_VS    => VGA_VS,
+             VGA_BLANK => VGA_BLANK,
+             VGA_SYNC  => VGA_SYNC,
+             VGA_CLK   => VGA_CLK);
+             
+  plot   <= not KEY(0);  
+
+-- process for changing color
+
+ 
+      radius <= 30;
+      x_num <= 60;
+      y_num <= 60;
+  --    y_offset<= 0;
+ --     x_offset <=radius;
+     COLOUR <= "001";
+
+
+------------------------------------------------------ process for changing cord
+  process(all)
+        
+    begin 
+      
+    if(rising_edge(CLOCK_50)) then 
+      if(which_octant=7) then
+      
+      which_octant <= 0;
+      
+      end if;
+            
+    if(y_offset <= x_offset) then
+    
+  if(which_octant=0) then
+     X <= std_logic_vector(to_unsigned((60+x_offset),8));
+     Y <= std_logic_vector(to_unsigned((60+y_offset),7));
+    end if;
+    
+    if(which_octant=1) then
+     X <= std_logic_vector(to_unsigned((60+y_offset),8));
+     Y <= std_logic_vector(to_unsigned((60+x_offset),7));
+    end if;
+    
+    if(which_octant=2) then
+     X <= std_logic_vector(to_unsigned((60-x_offset),8));
+     Y <= std_logic_vector(to_unsigned((60+y_offset),7));
+    end if;
+    
+    if(which_octant=3) then
+     X <= std_logic_vector(to_unsigned((60-y_offset),8));
+     Y <= std_logic_vector(to_unsigned((60+x_offset),7));
+    end if;
+    
+    if(which_octant=4) then
+     X <= std_logic_vector(to_unsigned((60-x_offset),8));
+     Y <= std_logic_vector(to_unsigned((60-y_offset),7));
+    end if;
+    
+    if(which_octant=5) then
+     X <= std_logic_vector(to_unsigned((60-y_offset),8));
+     Y <= std_logic_vector(to_unsigned((60-x_offset),7));
+    end if;
+    
+    if(which_octant=6) then
+     X <= std_logic_vector(to_unsigned((60+x_offset),8));
+     Y <= std_logic_vector(to_unsigned((60-y_offset),7));
+    end if;
+    
+    if(which_octant=7) then
+     X <= std_logic_vector(to_unsigned((60+y_offset),8));
+     Y <= std_logic_vector(to_unsigned((60-x_offset),7));
+    end if;
+    
+    y_offset <= y_offset + 1; 
+      if (crit <= 0) then 
+        crit <= crit + ( 2 * y_offset) +1;
+      else 
+        x_offset <= x_offset - 1;
+        crit <= crit + (2* (Y_offset-x_offset))+1;
+      end if;    
+    
+    
+  end if;
+   which_octant <= which_octant +1;
+end if; 
+
+  end process;
+  
+  ------------------------------------------------------ END process for changing cord
+  
+  
+end rtl;
+
+
+
