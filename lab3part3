@@ -68,7 +68,7 @@ begin
              VGA_SYNC  => VGA_SYNC,
              VGA_CLK   => VGA_CLK);
              
-  plot   <= not KEY(0);  
+  plot   <=  '1'; 
 
 -- process for changing color
 
@@ -85,12 +85,7 @@ begin
   process(all)
         
     begin 
-         if(which_octant=8) then
-      
-      which_octant <= 0;
-      
-      end if;
-      
+        
     if(rising_edge(CLOCK_50)) then 
    
             
@@ -136,6 +131,8 @@ begin
      Y <= std_logic_vector(to_unsigned((60-x_offset),7));
     end if;
     
+    
+    
     y_offset <= y_offset + 1; 
       if (crit <= 0) then 
         crit <= crit + ( 2 * y_offset) +1;
@@ -146,7 +143,13 @@ begin
     
     
   end if;
+   if(which_octant=7) then
+      
+      which_octant <= 0;
+      
+      else       
    which_octant <= which_octant +1;
+ end if;
 end if; 
 
   end process;
