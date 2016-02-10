@@ -158,9 +158,6 @@ begin
    which_octant <= which_octant +1;
  end if;
 
-else 
- x <=x;
-  y <=y;
 
 end if; 
 
