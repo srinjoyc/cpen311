@@ -45,6 +45,17 @@ architecture rtl of lab3 is
     SIGNAL radius: integer;
     SIGNAL crit: integer := -29;
     SIGNAL which_octant : integer := 0;
+	 
+	 type colour_array_type is array (1 to 7) of std_logic_vector(2 downto 0);
+	  type y_offset_array_type is array (1 to 7) of integer;
+	   type x_offset_array_type is array (1 to 7) of integer; 
+		type crit_array_type is array (1 to 7) of integer; 
+		type radius_array_type is array (1 to 7) of integer; 
+	 
+	 signal colour_array : colour_array_type := ("001","011","010","110","111","101","100"); 
+	 signal Y_offset_array : y_offset_array_type := (0,0,0,0,0,0,0);
+	 signal x_offset_array : x_offset_array_type := (30,28,26,24,22,20,18);
+	 signal crit_array : crit_array_type := (-29,-27,-25,-23,-21,-19,-17);
 
 begin
 
@@ -73,9 +84,7 @@ begin
 -- process for changing color
 
  
-      radius <= 30;
-      x_num <= 60;
-      y_num <= 60;
+      
      COLOUR <= "001";
 
 
