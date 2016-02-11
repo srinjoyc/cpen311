@@ -146,6 +146,7 @@ begin
               y_offset <= 0;
               x_offset <= radius_array(var_i);
               crit <= crit_array(var_i);
+              colour <= colour_array(var_i);
               
             end if;
             
