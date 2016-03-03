@@ -602,12 +602,12 @@ begin
 				  
 				  --------------------------------------------------------------------------------------------------------------------------
 				  
-				  if puck.y = PADDLE_ROW2 - 1 and puck.y = PADDLE_ROW - 1 then
+				  if puck.y = PADDLE_ROW2 - 1 then
 				     if puck.x >= paddle_x2 and puck.x <= paddle_x2 + PADDLE_WIDTH then
 					  
 					     -- we have bounced off the paddle
    				     puck_velocity.y := 0-puck_velocity.y;
-				  else
+				  elsif puck.y = PADDLE_ROW2 - 3 then
 				        -- we are at the bottom row, but missed the paddle.  Reset game!
 					     state := INIT;
 					  end if;	  
