@@ -113,6 +113,8 @@ begin
 	 variable paddle_x : unsigned(draw.x'range);
 	 variable paddle_x2 : unsigned(draw.x'range);
 	 
+	 variable turn: integer;
+	 
 	 -- These variables will store the puck and the puck velocity.
 	 -- In this implementation, the puck velocity has two components: an x component
 	 -- and a y component.  Each component is always +1 or -1.
@@ -594,6 +596,8 @@ begin
 					  
 					     -- we have bounced off the paddle
    				     puck_velocity.y := 0-puck_velocity.y;
+						  
+						  turn:=1; -- red turn 
 				  else
 				        -- we are at the bottom row, but missed the paddle.  Reset game!
 					     state := INIT;
@@ -607,6 +611,9 @@ begin
 					  
 					     -- we have bounced off the paddle
    				     puck_velocity.y := 0-puck_velocity.y;
+						  
+						  turn:=0; -- green turn
+						  
 				  elsif puck.y = PADDLE_ROW2 - 3 then
 				        -- we are at the bottom row, but missed the paddle.  Reset game!
 					     state := INIT;
@@ -619,7 +626,12 @@ begin
 		  -- ============================================================
 		  
         when DRAW_PUCK =>
+		  
+		   if(turn=1) then 
+				colour <= RED;
+			else 
 				  colour <= GREEN;
+		   end if;
               plot <= '1';
 				  draw <= puck;
 				  state := IDLE;	  -- next state is IDLE (which is the delay state)			  
