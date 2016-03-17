@@ -14,6 +14,22 @@ END task2;
 
 ARCHITECTURE Behavior OF task2 IS
 
+-- noise block component decleration 
+component noise 
+PORT ( CLOCK_50: in std_logic;
+	       magnitude : in std_logic_vector(1 downto 0);
+	       stream_in : in std_logic_vector(23 downto 0);
+	       stream_out : out std_logic_vector(23 downto 0));
+end component;
+
+-- filter block component declaration
+component fir8 
+PORT ( CLOCK_50, valid: in std_logic;
+          stream_in : in std_logic_vector(23 downto 0);
+          stream_out : out std_logic_vector(23 downto 0));
+end component;
+
+
    -- CODEC Cores
 	
 	COMPONENT clock_generator
@@ -46,20 +62,33 @@ ARCHITECTURE Behavior OF task2 IS
 	signal drive : std_logic;
 	signal counter: integer:= 0; 
 	signal index: integer:= 1;
+	signal valid: std_LOGIC;
+	signal mux : std_LOGIC_VECTOR(1 downto 0);
+	
+	-- pure signals
+	signal writedata_left_pure, writedata_right_pure							:STD_LOGIC_VECTOR(23 DOWNTO 0);	
+	
+	-- noise signals 
+	signal writedata_left_noise, writedata_right_noise							:STD_LOGIC_VECTOR(23 DOWNTO 0);	
+	
+	-- filtered signals 
+	signal writedata_left_filtered, writedata_right_filtered							:STD_LOGIC_VECTOR(23 DOWNTO 0);	
 	
 	-- array declarations
 	type samples_type is array (0 to 7) of integer;
 	 signal samples_array : samples_type := (183, 163, 145, 137, 123, 109, 97, 11); 
 	type counterbound_type is array (0 to 7) of integer;
 	 signal counterbound_array : counterbound_type := (91, 81, 72, 68, 61, 54, 48, 5);
+	 
 	
 	-- constants
-	constant min_amplitude : signed := "100000000000000000000000"; -- corresponds to -2^15
-	constant max_amplitude : signed := "011111111111111111111111"; -- corresponds to +2^15
+	constant min_amplitude : signed := "000000000100000000000000";--"100000000000000000000000"; -- corresponds to -2^15
+	constant max_amplitude : signed := "111111111100000000000000";  --"011111111111111111111111"; -- corresponds to +2^15
 	constant samples : integer := 183;
 	constant zero_amplitude: signed := "000000000000000000000000"; 
 BEGIN
 
+	
 	reset <= NOT(KEY(0));
 	read_s <= '0';
 	--drive <= '0';
@@ -73,14 +102,17 @@ BEGIN
       
       begin 
       
+			-- this block manages the handshaking
 		if(rising_edge(clock_50)) then 
 				
 				if (write_ready = '1') then 
 				drive <= '1';
 				write_s <= '1';
+				valid <= '1';
 				elsif (write_ready = '0')then  -- (write_ready = '0') then 
 			   drive <= '0';
 				write_s <= '0';
+				valid <= '0';
 			   else				
 				end if;
 				
@@ -90,10 +122,10 @@ BEGIN
 				end if;
 				
 		  end if;       
-        
+       
    end process;
     
-    
+    -- this block generates the pure sound  wave 
     process(all)
       
       begin 
@@ -102,30 +134,30 @@ BEGIN
 			 if index < 7 then 
           
 			 if (counter < counterbound_array(index) )  then 
-			   writedata_left <= std_LOGIC_VECTOR(max_amplitude);
-				writedata_right <= std_LOGIC_VECTOR(max_amplitude);            
+			   writedata_left_pure <= std_LOGIC_VECTOR(max_amplitude);
+				writedata_right_pure <= std_LOGIC_VECTOR(max_amplitude);            
            elsif (counter > (counterbound_array(index)+1) ) then  
-            writedata_left <= std_LOGIC_VECTOR(min_amplitude);
-				writedata_right <= std_LOGIC_VECTOR(min_amplitude);
+            writedata_left_pure <= std_LOGIC_VECTOR(min_amplitude);
+				writedata_right_pure <= std_LOGIC_VECTOR(min_amplitude);
           else
          end if; 
 			
 			else 		
 			
-			writedata_left <= std_LOGIC_VECTOR(zero_amplitude);
-			writedata_right <= std_LOGIC_VECTOR(zero_amplitude);
+			writedata_left_pure <= std_LOGIC_VECTOR(zero_amplitude);
+			writedata_right_pure <= std_LOGIC_VECTOR(zero_amplitude);
 			
 			end if;
         
         elsif (drive = '0') then
-		 		writedata_left <= std_LOGIC_VECTOR(zero_amplitude);
-		 		writedata_right <= std_LOGIC_VECTOR(zero_amplitude);
+		 		writedata_left_pure <= std_LOGIC_VECTOR(zero_amplitude);
+		 		writedata_right_pure <= std_LOGIC_VECTOR(zero_amplitude);
 			else
         end if;      
     
     end process;
    
-	
+	-- this block is used to interpret user input. Determines which note to be played. 
 	process (all) 
 	begin 
 	if (sw(0)='1') then 
@@ -148,6 +180,43 @@ BEGIN
 	
 	end process;
 	
-		
+	-- instantiations of noise
+	
+	noise_left : noise port map (clock_50, sw(17 downto  16), writedata_left_pure, writedata_left_noise); 	
+	noise_right : noise port map (clock_50, sw(17 downto  16), writedata_right_pure, writedata_right_noise);
+	
+	-- instantiations of the  filter
+	
+	filter_left : fir8 port map (clock_50, valid, writedata_left_noise, writedata_left_filtered);
+	filter_right : fir8 port map (clock_50, valid, writedata_right_noise, writedata_right_filtered);
+	
+	-- test process, implements a mux that assigns one of writedata_left_filtered, writedata_left_noise
+   -- or	writedata_left_pure to writedata_left
+	
+	mux <= sw(15 downto 14);
+	
+	process (all )
+	
+	begin 
+	
+	if (mux = "00") then
+	writedata_left <= writedata_left_pure;
+	writedata_right <= writedata_right_pure;
+	
+	elsif (mux = "01") then 
+	writedata_left <= writedata_left_noise;
+	writedata_right <= writedata_right_noise;
+	
+	elsif (mux = "10") then 
+	writedata_left <= writedata_left_filtered;
+	writedata_right <= writedata_right_filtered;
+	
+	else 
+	end if;
+	
+	end process;
+
+	
+	
 
 END Behavior;
