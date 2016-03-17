@@ -1,0 +1,87 @@
+LIBRARY ieee;
+USE ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+-- This is a FIR filter, as described in the lab handout.
+-- It is written as an 8-tap filter, although it can easily be changed
+-- for more taps. 
+
+ENTITY fir8 IS 
+   PORT ( CLOCK_50, valid: in std_logic;
+          stream_in : in std_logic_vector(23 downto 0);
+          stream_out : out std_logic_vector(23 downto 0));
+end fir8;
+
+ARCHITECTURE behaviour of fir8 is
+   -- Your code goes here
+	signal Q1,Q2,Q3,Q4,Q5,Q6,Q7,Q8 : signed(23 downto 0);
+	signal div_q1, div_q2 ,div_q3, div_q4, div_q5, div_q6, div_q7, div_q8 : signed (23 downto 0);
+	signal sum : signed (23 downto 0);
+	signal signed_sum : signed (23 downto 0);
+	signal negativity : std_logic;
+	
+	constant zero: signed (23 downto 0) := "000000000000000000000000";
+ begin
+   
+   process (clock_50)
+     
+     begin 
+     if(rising_edge(cloCK_50)) then 
+		 -- start of clock cycle
+	   	-- enable
+			
+			if (valid = '1') then 
+			 
+			 if (q1 < zero ) then 
+			  negativity <= '1';
+			  else negativity <= '0';
+			  end if;
+			
+			 q1 <= abs(signed(stream_in));
+			 q2 <= abs(q1);
+			 q3 <= abs(q2);
+			 q4 <= abs(q3);
+			 q5 <= abs(q4);
+			 q6 <= abs(q5);
+			 q7 <= abs(q6);
+			 q8 <= abs(q7);
+			 	
+			 stream_out <= std_logic_vector(signed_sum);
+				
+			 
+			end if;
+		 -- end of clock cycle
+		 end if;       
+	 -- end of process
+     end process;
+     
+     process(all )
+		--	variable temp : signed (23 downto 0); 
+       begin 
+		--	temp := q1;
+			
+      --   if( temp < zero ) then 
+			
+			
+			div_q1 <= "000" & q1(23 downto 3);
+         div_q2 <= "000" & q2(23 downto 3);
+         div_q3 <= "000" & q3(23 downto 3);
+         div_q4 <= "000" & q4(23 downto 3);
+         div_q5 <= "000" & q5(23 downto 3);
+         div_q6 <= "000" & q6(23 downto 3);
+         div_q7 <= "000" & q7(23 downto 3);			
+         div_q8 <= "000" & q8(23 downto 3);
+			
+			sum <= div_q1 + div_q2 + div_q3 + div_q4  + div_q5 + div_q6  + div_q7 + div_q8;
+			
+			if (negativity = '1') then 
+				signed_sum <= zero - sum;
+			else 
+				signed_sum <= sum;
+			end if;
+		
+         
+       end process; 
+   
+   
+end behaviour;
