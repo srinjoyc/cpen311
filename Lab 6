@@ -1,0 +1,186 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+-- Entity part of the description.  Describes inputs and outputs
+
+entity ksa is
+  port(CLOCK_50 : in  std_logic;  -- Clock pin
+       KEY : in  std_logic_vector(3 downto 0);  -- push button switches
+       SW : in  std_logic_vector(17 downto 0);  -- slider switches
+		 LEDG : out std_logic_vector(7 downto 0);  -- green lights
+		 LEDR : out std_logic_vector(17 downto 0));  -- red lights
+end ksa;
+
+-- Architecture part of the description
+
+architecture rtl of ksa is
+
+   -- Declare the component for the ram.  This should match the entity description 
+	-- in the entity created by the megawizard. If you followed the instructions in the 
+	-- handout exactly, it should match.  If not, look at s_memory.vhd and make the
+	-- changes to the component below
+	
+   COMPONENT s_memory IS
+	   PORT (
+		   address		: IN STD_LOGIC_VECTOR (7 DOWNTO 0);
+		   clock		: IN STD_LOGIC  := '1';
+		   data		: IN STD_LOGIC_VECTOR (7 DOWNTO 0);
+		   wren		: IN STD_LOGIC ;
+		   q		: OUT STD_LOGIC_VECTOR (7 DOWNTO 0));
+   END component;
+
+	   COMPONENT d_ram IS
+	   PORT (
+		   address		: IN STD_LOGIC_VECTOR (7 DOWNTO 0);
+		   clock		: IN STD_LOGIC  := '1';
+		   data		: IN STD_LOGIC_VECTOR (7 DOWNTO 0);
+		   wren		: IN STD_LOGIC ;
+		   q		: OUT STD_LOGIC_VECTOR (7 DOWNTO 0));
+   END component;
+	
+	-- Enumerated type for the state variable.  You will likely be adding extra
+	-- state names here as you complete your design
+	
+	type state_type is (state_init, 
+                       state_fill,
+							  state_readi,
+							  state_calcj,
+							  state_readj,
+							  state_swap1,
+							  state_swap2,
+							  state_increment,
+   	 					  state_done);
+								
+    -- These are signals that are used to connect to the memory													 
+	 signal address : STD_LOGIC_VECTOR (7 DOWNTO 0);	 
+	 signal data : STD_LOGIC_VECTOR (7 DOWNTO 0);
+	 signal wren : STD_LOGIC;
+	 signal q : STD_LOGIC_VECTOR (7 DOWNTO 0);
+	signal clk: std_LOGIC; 
+	signal resetb : std_LOGIC;
+	signal secret_key: std_LOGIC_VECTOR (23 downto 0);
+	
+
+	 begin
+	    -- Include the S memory structurally
+		clk <= clocK_50;
+		resetb <= key(0);
+		
+       u0: s_memory port map (
+	        address, clk, data, wren, q);
+			  
+       -- write your code here.  As described in Slide Set 14, this 
+       -- code will drive the address, data, and wren signals to
+       -- fill the memory with the values 0...255
+         
+       -- You will be likely writing this is a state machine. Ensure
+       -- that after the memory is filled, you enter a DONE state which
+       -- does nothing but loop back to itself.  
+		 
+		 secret_key <= "000000" & sw(17 downto 0);
+		 
+		 process (clk, resetb)
+		
+		variable counter : integer;
+		variable state : state_type;
+		 variable i,j: integer;
+		 variable flag : integer;
+		 variable tempi, tempj : std_LOGIC_VECTOR (7 downto 0);
+	
+
+		begin 
+		 
+		 if resetb = '0' then 
+		 state := state_init;
+		 i := 0;
+		 j :=0;
+		 
+		 elsif (rising_edge(clk)) then 
+		 
+		 case state is 
+		 when state_init => i:=0;
+									j:=0;
+									counter := 0;
+									state := state_fill;
+									wren <= '1';
+		when state_fill => 
+								address <= std_LOGIC_VECTOR(to_unsigned(i,8));
+							 data <= std_LOGIC_VECTOR(to_unsigned(i,8));
+							wren <= '1';
+							i:=i+1;
+							if i=256 then 
+							state := state_readi;
+							end if;
+		when state_readi =>
+									address <= std_LOGIC_VECTOR(to_unsigned(i,8));
+									wren <= '0';
+									counter := counter +1;
+									tempi := q;
+									if counter = 3 then 
+									state := state_calcj;
+									counter:=0;
+									end if;
+		when state_readj =>
+									address <= std_LOGIC_VECTOR(to_unsigned(j,8));
+									wren <= '0';
+									counter := counter +1;
+									tempj := q;
+									if counter = 3 then 
+									state := state_swap1;
+									counter:=0;
+									end if;
+		when state_calcj => 
+								 									
+									flag := to_integer(unsigned(secret_key)) mod 3;
+									if flag= 0 then
+									j := (j + to_integer(unsigned(secret_key(23 downto 16))) + to_integer(unsigned(tempi))) mod 256;
+									elsif flag =1 then 
+									j := (j + to_integer(unsigned(secret_key(15 downto 8))) + to_integer(unsigned(tempi))) mod 256;
+									elsif flag=2 then 
+									j := (j + to_integer(unsigned(secret_key(7 downto 0))) + to_integer(unsigned(tempi))) mod 256;
+									else 
+					
+									end if;
+									state:=state_readj;
+
+		
+		when state_swap1 => 
+		
+							address <= std_LOGIC_VECTOR(to_unsigned(i,8));
+							 data <= tempj;
+							wren <= '1';
+							
+							counter:= counter +1;
+							if counter=2 then 
+							state:= state_swap2;
+							counter:=0;
+							end if;
+							
+		when state_swap2 => 
+							address <= std_LOGIC_VECTOR(to_unsigned(j,8));
+							 data <= tempi;
+							wren <= '1';
+							counter:= counter +1;
+							
+							if counter=2 then
+							state:= state_increment;
+							counter:=0;
+							end if;
+		
+		when state_increment => i:=i+1;
+										if i = 256 then
+										state := state_done; 
+										else 
+										state := state_readi;
+										end if;
+		when state_done => 
+			
+		 end case;
+		 end if;
+		 end process;
+
+
+end RTL;
+
+
