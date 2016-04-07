@@ -47,6 +47,11 @@ architecture rtl of ksa is
 							  state_readi,
 							  state_calcj,
 							  state_readj,
+							  state_calcjwait,
+							  state_swap1wait,
+							  state_readjwait,
+							--  state_waiti,
+							--  state_waitj,
 							  state_swap1,
 							  state_swap2,
 							  state_increment,
@@ -111,28 +116,30 @@ architecture rtl of ksa is
 							i:=i+1;
 							if i=256 then 
 							state := state_readi;
+							i:=0;
 							end if;
-		when state_readi =>
+		when state_readi =>  
+								--	if counter=0 then 
+								--	state:= state_waitj;
+								--	else
+										
 									address <= std_LOGIC_VECTOR(to_unsigned(i,8));
 									wren <= '0';
-									counter := counter +1;
-									tempi := q;
-									if counter = 3 then 
-									state := state_calcj;
-									counter:=0;
-									end if;
-		when state_readj =>
-									address <= std_LOGIC_VECTOR(to_unsigned(j,8));
-									wren <= '0';
-									counter := counter +1;
-									tempj := q;
-									if counter = 3 then 
-									state := state_swap1;
-									counter:=0;
-									end if;
+									
+									state := state_calcjwait;
+									
+									--counter:=0;
+									
+								--	end if;
+		when state_calcjwait => --counter:= counter +1;
+									--	if counter =2 then
+										state := state_calcj;
+									--	counter:=0;
+									--	end if;
 		when state_calcj => 
-								 									
-									flag := to_integer(unsigned(secret_key)) mod 3;
+										
+									tempi := q;
+									flag := i mod 3;
 									if flag= 0 then
 									j := (j + to_integer(unsigned(secret_key(23 downto 16))) + to_integer(unsigned(tempi))) mod 256;
 									elsif flag =1 then 
@@ -142,31 +149,51 @@ architecture rtl of ksa is
 									else 
 					
 									end if;
-									state:=state_readj;
+									state:=state_readjwait;
 
+		when state_readjwait => 
+									
+									state:=state_readj;				
+		when state_readj => 
+									
+									--if counter=0 then 
+									--state:= state_waitj;
+									--else 
+									address <= std_LOGIC_VECTOR(to_unsigned(j,8));
+									wren <= '0';
+									 
+									state := state_swap1wait;
+									
+									--counter:=0;
+									--endif;
+		
+		when state_swap1wait => --counter:= counter +1;
+									--	if counter =2 then
+										state := state_swap1;	
+									--	counter:=0;	
+									--	end if;
 		
 		when state_swap1 => 
-		
+		               tempj := q;	
 							address <= std_LOGIC_VECTOR(to_unsigned(i,8));
-							 data <= tempj;
+							data <= tempj;
 							wren <= '1';
 							
-							counter:= counter +1;
-							if counter=2 then 
+				
+						
 							state:= state_swap2;
-							counter:=0;
-							end if;
+				
+					
 							
 		when state_swap2 => 
 							address <= std_LOGIC_VECTOR(to_unsigned(j,8));
-							 data <= tempi;
+							data <= tempi;
 							wren <= '1';
-							counter:= counter +1;
 							
-							if counter=2 then
+							
+				
 							state:= state_increment;
-							counter:=0;
-							end if;
+
 		
 		when state_increment => i:=i+1;
 										if i = 256 then
@@ -174,6 +201,14 @@ architecture rtl of ksa is
 										else 
 										state := state_readi;
 										end if;
+		
+	--	when state_waiti => state:= state_readi;
+	--							  counter:=1;
+	--	
+	--	when state_waitj => state:= state_readj;
+	--							  counter:=1;
+								
+		
 		when state_done => 
 			
 		 end case;
@@ -182,5 +217,6 @@ architecture rtl of ksa is
 
 
 end RTL;
+
 
 
